@@ -10,18 +10,21 @@ BUCKET = "temperature"
 TOKEN = os.environ.get("INFLUX_TOKEN")
 
 @st.cache_data
-def get_gas_resistance(time_range=30):
+def get_gas_resistance(time_range_min=30):
     client = InfluxDBClient(url=URL, token=TOKEN, org=ORG)
     query_api = client.query_api()
     result_df = query_api.query_data_frame(f'from(bucket:"{BUCKET}") '
-    f'|> range(start: -{time_range}m) '
+    f'|> range(start: -{time_range_min}m) '
     '|> filter(fn: (r) => r._measurement == "ambient_data") '
     '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")')
     client.close()
 
     return result_df
 
-chart_df = get_gas_resistance()
+# Add a slider to select the time range
+time_range = st.slider("Select time range (minutes)", min_value=10, max_value=24*60, value=30, step=10)
+
+chart_df = get_gas_resistance(time_range_min=time_range)
 # Convert gas resistance to kilo-ohms
 chart_df["gas"] = chart_df["gas"] / 1000
 # Round to one digit after the decimal point
