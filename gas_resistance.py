@@ -22,7 +22,7 @@ def get_gas_resistance(time_range_min=30):
     return result_df
 
 # Add a slider to select the time range
-time_range = st.slider("Select time range (minutes)", min_value=10, max_value=24*60, value=30, step=10)
+time_range = st.slider("Select time range (minutes)", min_value=10, max_value=10*60, value=30, step=10)
 
 chart_df = get_gas_resistance(time_range_min=time_range)
 # Convert gas resistance to kilo-ohms
