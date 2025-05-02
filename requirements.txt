@@ -1,2 +1,3 @@
 influxdb-client
 streamlit
+watchdog
