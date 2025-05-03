@@ -51,7 +51,7 @@ with col3:
         stop_datetime = datetime.combine(stop_date, stop_time)
 
 # Add a slider to select the time range
-time_range_min = st.slider("Time Range (Minutes)", min_value=10, max_value=10*60, value=30, step=10)
+time_range_min = st.slider("Time Range (Minutes)", min_value=10, max_value=12*60, value=30, step=10)
 
 chart_df = get_gas_resistance(minutes=time_range_min, stop_time_local=stop_datetime)
 #ensure column names are correct
