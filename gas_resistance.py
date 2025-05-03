@@ -45,7 +45,7 @@ with col1:
 with col2:
     stop_time = st.time_input("Stop Time", value=datetime.now().time())
 with col3:
-    if st.button("Reset Stop Time"):
+    if st.button("Reset Stop Date&Time"):
         stop_datetime = datetime.now()
     else:
         stop_datetime = datetime.combine(stop_date, stop_time)
