@@ -23,7 +23,6 @@ def get_gas_resistance(minutes=30, stop_time_local=None):
     # Make it timezone-aware (UTC)
     stop_time_utc = stop_time_local.astimezone(timezone.utc)
     start_time_utc = stop_time_utc - timedelta(minutes=minutes)
-    print(f"Start time UTC: {start_time_utc}, Stop time UTC: {stop_time_utc}")
 
     # Format for InfluxDB (RFC 3339 with Z suffix)
     start_time_str = start_time_utc.isoformat().replace('+00:00', 'Z')
@@ -66,7 +65,7 @@ chart_df["gas"] = chart_df["gas"].round(1)
 
 chart_df.rename(columns={"_time": "Date-Time", "gas": "Gas Resistance (kOhms)"},
                 inplace=True)
-#print(chart_df)
+
 st.title("Gas Resistance")
 st.write("## Line Chart")
 st.line_chart(chart_df, x="Date-Time", y="Gas Resistance (kOhms)")
