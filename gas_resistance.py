@@ -44,6 +44,12 @@ if "stop_date" not in st.session_state:
 if "stop_time" not in st.session_state:
     st.session_state.stop_time = datetime.now().time()
 
+# Define a callback function to reset the date and time
+def reset_stop_datetime():
+    now = datetime.now()
+    st.session_state.stop_date = now.date()
+    st.session_state.stop_time = now.time()
+
 # Add inputs for selecting the stop time
 col1, col2, col3 = st.columns([2, 2, 1])  # Adjust column widths as needed
 with col1:
@@ -51,13 +57,10 @@ with col1:
 with col2:
     stop_time = st.time_input("Stop Time", key="stop_time")
 with col3:
-    if st.button("Reset Stop Date&Time"):
-        # Update session state to current date and time
-        now = datetime.now()
-        st.session_state.stop_date = now.date()
-        st.session_state.stop_time = now.time()
-    else:
-        stop_datetime = datetime.combine(stop_date, stop_time)
+    st.button("Reset Stop Date&Time", on_click=reset_stop_datetime)
+
+# Combine stop_date and stop_time into a datetime object
+stop_datetime = datetime.combine(st.session_state.stop_date, st.session_state.stop_time)
 
 # Add a slider to select the time range
 time_range_min = st.slider("Time Range (Minutes)", min_value=10, max_value=12*60, value=30, step=10)
