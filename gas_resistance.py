@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 from datetime import datetime, timedelta, timezone
 from influxdb_client import InfluxDBClient
 import streamlit as st
@@ -10,22 +11,26 @@ URL = "http://192.168.77.81:8086"
 BUCKET = "temperature"
 TOKEN = os.environ.get("INFLUX_TOKEN")
 
+if not TOKEN:
+    print("Error: INFLUX_TOKEN environment variable is not set.")
+    sys.exit(1)
+
 @st.cache_data
-def get_gas_resistance(minutes=30, stop_time=None):
-    if stop_time is None:
-        stop_time = datetime.now()
-    client = InfluxDBClient(url=URL, token=TOKEN, org=ORG)
-    query_api = client.query_api()
+def get_gas_resistance(minutes=30, stop_time_local=None):
+    if stop_time_local is None:
+        stop_time_local = datetime.now()
 
     # Make it timezone-aware (UTC)
-    stop_time_utc = stop_time.replace(tzinfo=timezone.utc)
+    stop_time_utc = stop_time_local.astimezone(timezone.utc)
+    start_time_utc = stop_time_utc - timedelta(minutes=minutes)
+    print(f"Start time UTC: {start_time_utc}, Stop time UTC: {stop_time_utc}")
 
-    start_time_utc = stop_time_utc - timedelta(minutes=minutes)# Format for InfluxDB (RFC 3339 with Z suffix)
+    # Format for InfluxDB (RFC 3339 with Z suffix)
     start_time_str = start_time_utc.isoformat().replace('+00:00', 'Z')
     stop_time_str = stop_time_utc.isoformat().replace('+00:00', 'Z')
 
-    print(start_time_str, stop_time_str)
-
+    client = InfluxDBClient(url=URL, token=TOKEN, org=ORG)
+    query_api = client.query_api()
     result_df = query_api.query_data_frame(f'from(bucket:"{BUCKET}") '
     f'|> range(start: {start_time_str}, stop: {stop_time_str}) '
     '|> filter(fn: (r) => r._measurement == "ambient_data") '
@@ -34,20 +39,26 @@ def get_gas_resistance(minutes=30, stop_time=None):
 
     return result_df
 
-# Add a slider to select the time range
-time_range_min = st.slider("Select time range (minutes)", min_value=10, max_value=10*60, value=30, step=10)
-
 # Add inputs for selecting the stop time
-st.write("### Select Stop Time")
-stop_date = st.date_input("Stop Date", value=datetime.now().date())
-stop_time = st.time_input("Stop Time", value=datetime.now().time())
-stop_datetime = datetime.combine(stop_date, stop_time)
+col1, col2, col3 = st.columns([2, 2, 1])  # Adjust column widths as needed
+with col1:
+    stop_date = st.date_input("Stop Date", value=datetime.now().date())
+with col2:
+    stop_time = st.time_input("Stop Time", value=datetime.now().time())
+with col3:
+    if st.button("Reset Stop Time"):
+        stop_datetime = datetime.now()
+    else:
+        stop_datetime = datetime.combine(stop_date, stop_time)
 
-# Add a button to reset the stop time to the current date and time
-if st.button("Reset Stop Time to Now"):
-    stop_datetime = datetime.now()
+# Add a slider to select the time range
+time_range_min = st.slider("Time Range (Minutes)", min_value=10, max_value=10*60, value=30, step=10)
 
-chart_df = get_gas_resistance(minutes=time_range_min, stop_time=stop_datetime)
+chart_df = get_gas_resistance(minutes=time_range_min, stop_time_local=stop_datetime)
+#ensure column names are correct
+if "gas" not in chart_df.columns:
+    st.error("No data found for the selected time range.")
+    st.stop()
 # Convert gas resistance to kilo-ohms
 chart_df["gas"] = chart_df["gas"] / 1000
 # Round to one digit after the decimal point
