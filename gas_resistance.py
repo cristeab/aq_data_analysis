@@ -66,18 +66,41 @@ stop_datetime = datetime.combine(st.session_state.stop_date, st.session_state.st
 time_range_min = st.slider("Time Range (Minutes)", min_value=10, max_value=24*60, value=6*60, step=10)
 
 chart_df = get_gas_resistance(minutes=time_range_min, stop_time_local=stop_datetime)
-#ensure column names are correct
-if "gas" not in chart_df.columns:
+
+# Filter columns to exclude those starting with "_" or named "result" or "table"
+valid_columns = [col for col in chart_df.columns if not col.startswith("_") and col not in ["result", "table"]]
+
+# Add a combo box for selecting the column name
+column_name = st.selectbox(f"Select Column from bucket {BUCKET}", valid_columns)
+
+#ensure there is data for the selected time range
+if column_name not in chart_df.columns:
     st.error("No data found for the selected time range.")
     st.stop()
-# Convert gas resistance to kilo-ohms
-chart_df["gas"] = chart_df["gas"] / 1000
-# Round to one digit after the decimal point
-chart_df["gas"] = chart_df["gas"].round(1)
 
-chart_df.rename(columns={"_time": "Date-Time", "gas": "Gas Resistance (kOhms)"},
+if column_name == "gas":
+    # Convert gas resistance to kilo-ohms
+    chart_df[column_name] = chart_df[column_name] / 1000
+    # Round to one digit after the decimal point
+    chart_df[column_name] = chart_df[column_name].round(1)
+    pretty_name = "Gas Resistance (kOhms)"
+elif column_name == "temperature":
+    chart_df[column_name] = chart_df[column_name].round(1)
+    pretty_name = "Temperature (Celsius)"
+elif column_name == "relative_humidity":
+    chart_df[column_name] = chart_df[column_name].round(1)
+    pretty_name = "Humidity (%)"
+elif column_name == "pressure":
+    chart_df[column_name] = chart_df[column_name].round(1)
+    pretty_name = "Pressure (hPa)"
+elif column_name == "iaq":
+    chart_df[column_name] = chart_df[column_name].round(1)
+    pretty_name = "IAQ Index"
+else:
+    pretty_name = column_name
+
+chart_df.rename(columns={"_time": "Date-Time", column_name: pretty_name},
                 inplace=True)
-
-st.title("Gas Resistance")
+st.title(pretty_name)
 st.write("## Line Chart")
-st.line_chart(chart_df, x="Date-Time", y="Gas Resistance (kOhms)")
+st.line_chart(chart_df, x="Date-Time", y=pretty_name)
