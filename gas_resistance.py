@@ -8,7 +8,6 @@ import streamlit as st
 
 ORG = "home"
 URL = "http://192.168.77.81:8086"
-BUCKET = "temperature"
 TOKEN = os.environ.get("INFLUX_TOKEN")
 
 if not TOKEN:
@@ -16,7 +15,7 @@ if not TOKEN:
     sys.exit(1)
 
 @st.cache_data
-def get_gas_resistance(minutes=30, stop_time_local=None):
+def get_gas_resistance(bucket, measurement, minutes=30, stop_time_local=None):
     if stop_time_local is None:
         stop_time_local = datetime.now()
 
@@ -30,9 +29,9 @@ def get_gas_resistance(minutes=30, stop_time_local=None):
 
     client = InfluxDBClient(url=URL, token=TOKEN, org=ORG)
     query_api = client.query_api()
-    result_df = query_api.query_data_frame(f'from(bucket:"{BUCKET}") '
+    result_df = query_api.query_data_frame(f'from(bucket:"{bucket}") '
     f'|> range(start: {start_time_str}, stop: {stop_time_str}) '
-    '|> filter(fn: (r) => r._measurement == "ambient_data") '
+    f'|> filter(fn: (r) => r._measurement == "{measurement}") '
     '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")')
     client.close()
 
@@ -65,13 +64,29 @@ stop_datetime = datetime.combine(st.session_state.stop_date, st.session_state.st
 # Add a slider to select the time range
 time_range_min = st.slider("Time Range (Minutes)", min_value=10, max_value=24*60, value=6*60, step=10)
 
-chart_df = get_gas_resistance(minutes=time_range_min, stop_time_local=stop_datetime)
+# Add combo box for selecting the bucket
+bucket_name = st.selectbox("Select Bucket", ["temperature", "noise", "aqi", "pm"])
+
+# Select measurement based on the selected bucket
+if bucket_name == "temperature":
+    measurement = "ambient_data"
+elif bucket_name == "noise":
+    measurement = "noise_level"
+elif bucket_name == "aqi":
+    measurement = "air_quality_data"
+elif bucket_name == "pm":
+    measurement = "air_quality_data_0" # TODO
+else:    
+    st.error("No measurement for the selected bucket.")
+    st.stop()
+
+chart_df = get_gas_resistance(bucket=bucket_name, measurement=measurement, minutes=time_range_min, stop_time_local=stop_datetime)
 
 # Filter columns to exclude those starting with "_" or named "result" or "table"
 valid_columns = [col for col in chart_df.columns if not col.startswith("_") and col not in ["result", "table"]]
 
 # Add a combo box for selecting the column name
-column_name = st.selectbox(f"Select Column from bucket {BUCKET}", valid_columns)
+column_name = st.selectbox(f"Select Column from bucket {bucket_name}", valid_columns)
 
 #ensure there is data for the selected time range
 if column_name not in chart_df.columns:
@@ -81,24 +96,24 @@ if column_name not in chart_df.columns:
 if column_name == "gas":
     # Convert gas resistance to kilo-ohms
     chart_df[column_name] = chart_df[column_name] / 1000
-    # Round to one digit after the decimal point
-    chart_df[column_name] = chart_df[column_name].round(1)
     pretty_name = "Gas Resistance (kOhms)"
 elif column_name == "temperature":
-    chart_df[column_name] = chart_df[column_name].round(1)
     pretty_name = "Temperature (Celsius)"
 elif column_name == "relative_humidity":
-    chart_df[column_name] = chart_df[column_name].round(1)
     pretty_name = "Humidity (%)"
 elif column_name == "pressure":
-    chart_df[column_name] = chart_df[column_name].round(1)
     pretty_name = "Pressure (hPa)"
 elif column_name == "iaq":
-    chart_df[column_name] = chart_df[column_name].round(1)
     pretty_name = "IAQ Index"
+elif column_name == "noise_level":
+    pretty_name = "Noise Level (dB)"
+elif column_name == "pm25_cf1_aqi":
+    pretty_name = "10-min. AQI"
 else:
     pretty_name = column_name
 
+# Round to one digit after the decimal point
+chart_df[column_name] = chart_df[column_name].round(1)
 chart_df.rename(columns={"_time": "Date-Time", column_name: pretty_name},
                 inplace=True)
 st.title(pretty_name)
