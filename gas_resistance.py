@@ -107,8 +107,8 @@ elif column_name == "iaq":
     pretty_name = "IAQ Index"
 elif column_name == "noise_level":
     pretty_name = "Noise Level (dB)"
-elif column_name == "pm25_cf1_aqi":
-    pretty_name = "10-min. AQI"
+#elif column_name == "pm25_cf1_aqi":
+#    pretty_name = "10-min. AQI"
 else:
     pretty_name = column_name
 
