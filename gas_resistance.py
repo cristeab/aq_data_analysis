@@ -38,15 +38,24 @@ def get_gas_resistance(minutes=30, stop_time_local=None):
 
     return result_df
 
+# Initialize session state for stop_date and stop_time
+if "stop_date" not in st.session_state:
+    st.session_state.stop_date = datetime.now().date()
+if "stop_time" not in st.session_state:
+    st.session_state.stop_time = datetime.now().time()
+
 # Add inputs for selecting the stop time
 col1, col2, col3 = st.columns([2, 2, 1])  # Adjust column widths as needed
 with col1:
-    stop_date = st.date_input("Stop Date", value=datetime.now().date())
+    stop_date = st.date_input("Stop Date", key="stop_date")
 with col2:
-    stop_time = st.time_input("Stop Time", value=datetime.now().time())
+    stop_time = st.time_input("Stop Time", key="stop_time")
 with col3:
     if st.button("Reset Stop Date&Time"):
-        stop_datetime = datetime.now()
+        # Update session state to current date and time
+        now = datetime.now()
+        st.session_state.stop_date = now.date()
+        st.session_state.stop_time = now.time()
     else:
         stop_datetime = datetime.combine(stop_date, stop_time)
 
