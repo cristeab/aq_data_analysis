@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 from datetime import datetime, timedelta, timezone
 from influxdb_client import InfluxDBClient
 import streamlit as st
@@ -11,11 +10,11 @@ URL = "http://192.168.77.81:8086"
 TOKEN = os.environ.get("INFLUX_TOKEN")
 
 if not TOKEN:
-    print("Error: INFLUX_TOKEN environment variable is not set.")
-    sys.exit(1)
+    st.error("INFLUX_TOKEN environment variable is not set.")
+    st.stop()
 
 @st.cache_data
-def get_gas_resistance(bucket, measurement, minutes=30, stop_time_local=None):
+def get_data(bucket, measurement, minutes=30, stop_time_local=None):
     if stop_time_local is None:
         stop_time_local = datetime.now()
 
@@ -80,7 +79,7 @@ else:
     st.error("No measurement for the selected bucket.")
     st.stop()
 
-chart_df = get_gas_resistance(bucket=bucket_name, measurement=measurement, minutes=time_range_min, stop_time_local=stop_datetime)
+chart_df = get_data(bucket=bucket_name, measurement=measurement, minutes=time_range_min, stop_time_local=stop_datetime)
 
 # Filter columns to exclude those starting with "_" or named "result" or "table"
 valid_columns = [col for col in chart_df.columns if not col.startswith("_") and col not in ["result", "table"]]
@@ -107,8 +106,8 @@ elif column_name == "iaq":
     pretty_name = "IAQ Index"
 elif column_name == "noise_level":
     pretty_name = "Noise Level (dB)"
-#elif column_name == "pm25_cf1_aqi":
-#    pretty_name = "10-min. AQI"
+elif column_name == "pm25_cf1_aqi":
+    pretty_name = "10-min AQI"
 else:
     pretty_name = column_name
 
