@@ -1,6 +1,6 @@
 # Air Quality Data Analysis
 
-
+This script is intended for historical AQ data analysis provided by [aq_dashboard](https://github.com/cristeab/aq_dashboard) project.
 Prepare the Python virtual environment:
 
 ```bash
