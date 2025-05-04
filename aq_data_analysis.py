@@ -74,7 +74,8 @@ elif bucket_name == "noise":
 elif bucket_name == "aqi":
     measurement = "air_quality_data"
 elif bucket_name == "pm":
-    measurement = "air_quality_data_0" # TODO
+    sensor_index = st.selectbox("Select AQ Sensor", [0, 1])
+    measurement = f"air_quality_data_{sensor_index}"
 else:    
     st.error("No measurement for the selected bucket.")
     st.stop()
