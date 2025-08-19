@@ -115,7 +115,7 @@ else:
 
 # Round to one digit after the decimal point
 chart_df[column_name] = chart_df[column_name].round(1)
-chart_df.rename(columns={"_time": "Date-Time", column_name: pretty_name},
+chart_df.rename(columns={"time": "Date-Time", column_name: pretty_name},
                 inplace=True)
 st.title(pretty_name)
 st.write("## Line Chart")
