@@ -2,15 +2,16 @@
 
 import os
 from datetime import datetime, timedelta, timezone
-from influxdb_client import InfluxDBClient
+from influxdb_client_3 import InfluxDBClient3
 import streamlit as st
 
-ORG = "home"
-URL = "http://192.168.77.81:8086"
-TOKEN = os.environ.get("INFLUX_TOKEN")
+
+AUTH_SCHEME = "Bearer"
+URL = "http://192.168.77.44:8181"
+TOKEN = os.environ.get("INFLUXDB3_AUTH_TOKEN")
 
 if not TOKEN:
-    st.error("INFLUX_TOKEN environment variable is not set.")
+    st.error("INFLUXDB3_AUTH_TOKEN environment variable is not set.")
     st.stop()
 
 @st.cache_data
@@ -26,12 +27,12 @@ def get_data(bucket, measurement, minutes=30, stop_time_local=None):
     start_time_str = start_time_utc.isoformat().replace('+00:00', 'Z')
     stop_time_str = stop_time_utc.isoformat().replace('+00:00', 'Z')
 
-    client = InfluxDBClient(url=URL, token=TOKEN, org=ORG)
-    query_api = client.query_api()
-    result_df = query_api.query_data_frame(f'from(bucket:"{bucket}") '
-    f'|> range(start: {start_time_str}, stop: {stop_time_str}) '
-    f'|> filter(fn: (r) => r._measurement == "{measurement}") '
-    '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")')
+    client = InfluxDBClient3(host=URL, token=TOKEN, database=bucket, auth_scheme=AUTH_SCHEME)
+    sql = (
+        f'SELECT * FROM "{measurement}" '
+        f'WHERE time >= \'{start_time_str}\' AND time <= \'{stop_time_str}\''
+    )
+    result_df = client.query(query=sql, language="sql", mode="pandas")
     client.close()
 
     return result_df
