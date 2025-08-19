@@ -65,7 +65,7 @@ stop_datetime = datetime.combine(st.session_state.stop_date, st.session_state.st
 time_range_min = st.slider("Time Range (Minutes)", min_value=10, max_value=24*60, value=6*60, step=10)
 
 # Add combo box for selecting the bucket
-bucket_name = st.selectbox("Select Bucket", ["temperature", "noise", "aqi", "pm"])
+bucket_name = st.selectbox("Select Bucket", ["temperature", "noise", "aqi", "pm", "light"])
 
 # Select measurement based on the selected bucket
 if bucket_name == "temperature":
@@ -77,6 +77,8 @@ elif bucket_name == "aqi":
 elif bucket_name == "pm":
     sensor_index = st.selectbox("Select AQ Sensor", [0, 1])
     measurement = f"air_quality_data_{sensor_index}"
+elif bucket_name == "light":
+    measurement = "light_data"
 else:    
     st.error("No measurement for the selected bucket.")
     st.stop()
@@ -84,7 +86,7 @@ else:
 chart_df = get_data(bucket=bucket_name, measurement=measurement, minutes=time_range_min, stop_time_local=stop_datetime)
 
 # Filter columns to exclude those starting with "_" or named "result" or "table"
-valid_columns = [col for col in chart_df.columns if not col.startswith("_") and col not in ["result", "table"]]
+valid_columns = [col for col in chart_df.columns if not col.startswith("_") and col not in ["result", "table", "time"]]
 
 # Add a combo box for selecting the column name
 column_name = st.selectbox(f"Select Column from bucket {bucket_name}", valid_columns)
@@ -110,6 +112,10 @@ elif column_name == "noise_level":
     pretty_name = "Noise Level (dB)"
 elif column_name == "pm25_cf1_aqi":
     pretty_name = "10-min AQI"
+elif column_name == "visible_light_lux":
+    pretty_name = "Visible Light (lux)"
+elif column_name == "us_index":
+    pretty_name = "UV Index"
 else:
     pretty_name = column_name
 
