@@ -90,7 +90,7 @@ chart_df = get_data(database=database_name, table=table_name, minutes=time_range
 valid_columns = [col for col in chart_df.columns if not col.startswith("_") and col not in ["result", "table", "time"]]
 
 # Add a combo box for selecting the column name
-column_name = st.selectbox(f"Select column from table {table_name}", valid_columns)
+column_name = st.selectbox("Select column", valid_columns)
 
 #ensure there is data for the selected time range
 if column_name not in chart_df.columns:
