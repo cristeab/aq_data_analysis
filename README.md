@@ -9,10 +9,10 @@ Prepare the Python virtual environment:
     pip install -r requirements.txt
 ```
 
-Set INFLUX_TOKEN environment variable, then run the script
+Set INFLUXDB3_AUTH_TOKEN environment variable, then run the script
 
 ```bash
-    export INFLUX_TOKEN="<token>"
+    export INFLUXDB3_AUTH_TOKEN="<token>"
     streamlit run ./aq_data_analysis.py
 ```
 
